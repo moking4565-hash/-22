@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>КАНАЛ 7 // ВХОДЯЩЕЕ</title>
+<style>
+:root{--y:#ffd21a;--yd:#a07f00;--r:#e0182d;--rd:#6e0a14;--bg:#090500}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--y);font:15px/1.65 "Courier New",Consolas,monospace;overflow:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:20;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 1px,transparent 1px 3px)}
+body::after{content:"";position:fixed;inset:0;z-index:19;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.75))}
+.scr{position:fixed;inset:0;padding:7vh 7vw;overflow:auto;animation:flick 7s infinite}
+.hidden{display:none}
+#log div{white-space:pre-wrap;text-shadow:0 0 6px rgba(255,210,26,.45)}
+.warn{color:var(--r);text-shadow:0 0 6px rgba(224,24,45,.6)}
+.dim{color:var(--yd)}
+.bar{color:var(--r)}
+#flash{position:fixed;inset:0;z-index:30;background:var(--y);opacity:0;pointer-events:none}
+#flash.go{animation:fl .6s ease-out}
+.mon{max-width:720px;margin:2vh auto 0;border:2px solid var(--rd);box-shadow:0 0 28px rgba(224,24,45,.25),inset 0 0 40px rgba(224,24,45,.08)}
+.mon header{display:flex;justify-content:space-between;gap:12px;background:var(--r);color:#150002;padding:4px 12px;font-weight:bold}
+.mon .body{padding:22px 24px 26px;min-height:46vh;white-space:pre-wrap;text-shadow:0 0 7px rgba(255,210,26,.5)}
+.mon .meta{color:var(--r);text-shadow:0 0 6px rgba(224,24,45,.55)}
+.cur{display:inline-block;width:.6em;height:1.05em;background:var(--y);vertical-align:-3px;animation:bl 1s steps(1) infinite}
+#again{margin-top:18px;color:var(--yd);opacity:0}
+#again.on{opacity:1;animation:bl 1.4s steps(1) infinite}
+.g{animation:gl .25s steps(2) 1}
+@keyframes bl{50%{opacity:0}}
+@keyframes fl{0%{opacity:0}15%{opacity:.95}100%{opacity:0}}
+@keyframes flick{0%,96%,100%{opacity:1}97%{opacity:.86}98%{opacity:1}99%{opacity:.92}}
+@keyframes gl{0%{transform:translate(-3px,0);filter:hue-rotate(-30deg)}50%{transform:translate(3px,1px)}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){.scr,.g,#again.on,.cur{animation:none}}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+
+<main id="boot" class="scr" tabindex="0" aria-live="polite"><div id="log"></div></main>
+
+<main id="msg" class="scr hidden">
+  <div class="mon">
+    <header><span>СООБЩЕНИЕ.TXT</span><span>КАНАЛ 7</span></header>
+    <div class="body"><span id="meta" class="meta"></span><span id="txt"></span><span class="cur"></span>
+<div id="again">[ любая клавиша — перечитать ]</div></div>
+  </div>
+</main>
+
+<script>
+// ===== Текст сообщения — меняйте здесь =====
+const META = "ОТ: Дантист (чаилд)\n------------------------------\n\n";
+const MESSAGE = `Долгих вам ночей многоуважаемая Князь (Mother)
+
+Позволю себе обратиться к Вам с небольшим перечнем идей и просьб, которые хотел бы изложить заранее, дабы в дальнейшем не отвлекать Вас лишний раз от насущных дел.
+
+1. Относительно Вашего гуля.
+
+У меня есть пара идей для реализации вашего гуля, где она сможет преувеличить свою пользу и дабы так-же разгрузить вас с данной ''передержки'' гулей, смею попросить вас о том чтоб дать мне право владения вашим гулем и стать его владельцем и снять тем самым с вас часть забот, связанных с её нынешним содержанием и присмотром за ней.
+Со своей стороны, я готов взять на себя ответственность за её дальнейшее использование и постараться оправдать оказанное мне доверие.
+
+2. Смена документов.
+
+Недавно у меня была стычка с полицией, в ходе этой встречи остались следы моей ДНК. Ввиду возможных последствий хотел бы деликатно напомнить о ранее запрошенной услуге по смене документов.
+
+Желаемые данные для новых документов:
+
+— Имя и фамилия: Джеффри Бертон.
+— Возраст: 24 года.
+— Дата рождения: 8 декабря.
+
+На данный момент это всё что я хотел бы с вами обговорить, буду ждать вашего ответа с нетерпением.
+Желаю Вам долгих ночей, неиссякаемых сил и возможности отдохнуть от работы. Если я могу чем-то помочь то с радостью приму ваши поручения.`;
+
+// ===== Загрузка =====
+const BOOT = [
+  ["ИНИЦИАЛИЗАЦИЯ НОСИТЕЛЯ...", ""],
+  ["СКАНИРОВАНИЕ СЕКТОРОВ: 0000 / 4096", "dim"],
+  ["СЕКТОР 1873 ПОВРЕЖДЁН", "warn"],
+  ["СЕКТОР 2210 ПОВРЕЖДЁН", "warn"],
+  ["ВОССТАНОВЛЕНИЕ ТАБЛИЦЫ РАЗМЕЩЕНИЯ ФАЙЛОВ...", ""],
+  ["ЗАГРУЗКА ДАННЫХ", "bar"],
+  ["ШИФРОВАНИЕ КАНАЛА: АКТИВНО (AES-256)", ""],
+  ["ОБМЕН КЛЮЧАМИ", "bar"],
+  ["ПРОВЕРКА ПОДПИСИ ОТПРАВИТЕЛЯ... НЕ ПРОЙДЕНА", "warn"],
+  ["РАСШИФРОВКА СООБЩЕНИЯ", "bar"],
+  ["ДОСТУП РАЗРЕШЁН", ""]
+];
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const hex=n=>Array.from({length:n},()=>Math.floor(Math.random()*256).toString(16).padStart(2,"0")).join(" ");
+
+async function progress(el){
+  for(let p=0;p<=100;p+=Math.ceil(Math.random()*9)){
+    const q=Math.min(p,100),f=Math.round(q/5);
+    el.textContent="["+"█".repeat(f)+"░".repeat(20-f)+"] "+String(q).padStart(3," ")+"%";
+    await sleep(40+Math.random()*70);
+  }
+  el.textContent="["+"█".repeat(20)+"] 100%";
+}
+
+async function boot(){
+  const log=$("log"); log.innerHTML="";
+  for(const [t,c] of BOOT){
+    const d=document.createElement("div");
+    if(c&&c!=="bar")d.className=c;
+    log.appendChild(d);
+    if(c==="bar"){
+      d.className="bar";
+      const head=document.createElement("div"); head.textContent=t; log.insertBefore(head,d);
+      await progress(d);
+    }else{
+      d.textContent=t;
+      if(t.startsWith("ШИФРОВАНИЕ")||t.startsWith("ОБМЕН")){log.appendChild(Object.assign(document.createElement("div"),{className:"dim",textContent:hex(16)}));}
+      if(c==="warn"){d.classList.add("g");}
+    }
+    $("boot").scrollTop=1e5;
+    await sleep(c==="warn"?380:220);
+  }
+  await sleep(500);
+  $("flash").classList.add("go");
+  await sleep(260);
+  $("boot").classList.add("hidden");
+  $("msg").classList.remove("hidden");
+  type();
+}
+
+// ===== Печатная машинка =====
+let typing=false, skip=false;
+async function type(){
+  typing=true; skip=false;
+  $("again").classList.remove("on");
+  $("meta").textContent=""; $("txt").textContent="";
+  for(const ch of META){ $("meta").textContent+=ch; await sleep(skip?0:12); }
+  for(const ch of MESSAGE){
+    $("txt").textContent+=ch;
+    $("msg").scrollTop=1e5;
+    if(!skip) await sleep(ch==="\n"?70:ch==="."?60:7+Math.random()*13);
+  }
+  typing=false;
+  $("again").classList.add("on");
+}
+addEventListener("keydown",()=>{ if(!$("msg").classList.contains("hidden")){ typing?skip=true:type(); } });
+$("msg").addEventListener("click",()=>{ typing?skip=true:type(); });
+
+boot();
+</script>
+</body>
+</html>
